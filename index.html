@@ -1,313 +1,663 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта Лояльности</title>
-    <script src="https://telegram.org"></script>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bronze: linear-gradient(135deg, #a86038 0%, #c48c6c 100%);
-            --card-silver: linear-gradient(135deg, #707880 0%, #b8bfc6 100%);
-            --card-gold: linear-gradient(135deg, #a37a1a 0%, #e6ca65 100%);
-            --text-color: #ffffff;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+                 maximum-scale=1.0, user-scalable=no">
+  <title>Gloss · Карта лояльности</title>
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-        }
+  <!-- Telegram Mini App SDK (обязателен) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        .welcome-text {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 25px;
-            text-align: center;
-            color: #e0e0e0;
-        }
+  <style>
+    /* ══════════════════════════════════════════════════
+       ДИЗАЙН-СИСТЕМА  —  Premium Dark Beauty
+       ══════════════════════════════════════════════════ */
+    :root {
+      --bg:           #0F0B14;
+      --card-from:    #261540;
+      --card-to:      #150B27;
+      --gold:         #C8A882;
+      --gold-dim:     rgba(200, 168, 130, 0.35);
+      --rose:         #C2727A;
+      --text:         #F2EBF7;
+      --text-dim:     rgba(242, 235, 247, 0.50);
+      --surface:      rgba(255, 255, 255, 0.04);
+      --border:       rgba(200, 168, 130, 0.22);
+      --radius:       22px;
+      --card-h:       206px;
+    }
 
-        .card-container {
-            perspective: 1000px;
-            width: 335px;
-            height: 200px;
-            margin-bottom: 30px;
-            cursor: pointer;
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+                   'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 18px 48px;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        .card-container.flipped .card-inner {
-            transform: rotateY(180deg);
-        }
+    /* ── Шапка ──────────────────────────────────────── */
+    .header {
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      margin-bottom: 26px;
+    }
+    .logo-text {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .tagline {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
+      margin-top: 5px;
+    }
 
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
-            padding: 20px;
-        }
+    /* ── КАРТОЧКА — сцена с 3D-перспективой ─────────── */
+    .card-scene {
+      width: 100%;
+      max-width: 360px;
+      height: var(--card-h);
+      perspective: 1200px;
+      cursor: pointer;
+      margin-bottom: 26px;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        .card-front {
-            background: var(--card-bronze);
-            justify-content: space-between;
-            align-items: flex-start;
-            text-align: left;
-        }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-scene.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
 
-        .card-back {
-            background: #ffffff;
-            color: #000000;
-            transform: rotateY(180deg);
-            justify-content: center;
-            align-items: center;
-        }
+    /* Общие стили лицевой и оборотной сторон */
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
 
-        .salon-logo {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+    /* ─ Лицевая сторона ─ */
+    .card-front {
+      background: linear-gradient(
+        135deg,
+        var(--card-from) 0%,
+        #1E1034 48%,
+        var(--card-to)   100%
+      );
+      padding: 22px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
 
-        .balance-block {
-            margin-top: auto;
-        }
+    /* Мягкое сияние в правом верхнем углу */
+    .card-front::after {
+      content: '';
+      position: absolute;
+      top: -60px; right: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(
+        circle, rgba(200,168,130,0.10) 0%, transparent 65%
+      );
+      pointer-events: none;
+    }
 
-        .balance-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            opacity: 0.8;
-            letter-spacing: 0.5px;
-        }
+    .cf-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .cf-brand {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: var(--gold);
+    }
+    /* Декоративный «чип» */
+    .cf-chip {
+      width: 34px; height: 24px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, #C8A882 0%, #8A6240 100%);
+      opacity: 0.75;
+    }
 
-        .balance-value {
-            font-size: 32px;
-            font-weight: 700;
-        }
+    .cf-middle { }
+    .cf-bal-label {
+      font-size: 9.5px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cf-bal-value {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .cf-bal-unit {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
 
-        .card-footer {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            font-size: 14px;
-            font-weight: 500;
-        }
+    .cf-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .cf-name   { font-size: 13px; font-weight: 600; color: var(--text); }
+    .cf-status { font-size: 10.5px; color: var(--gold); margin-top: 3px; letter-spacing: 0.3px; }
+    .cf-hint   { font-size: 8.5px; color: var(--text-dim); letter-spacing: 1px; }
 
-        .progress-container {
-            width: 335px;
-            margin-bottom: 40px;
-        }
+    /* ─ Оборотная сторона ─ */
+    .card-back {
+      background: linear-gradient(
+        135deg,
+        var(--card-to)   0%,
+        #1F1338 50%,
+        var(--card-from) 100%
+      );
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 18px;
+    }
 
-        .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #aaa;
-            margin-bottom: 8px;
-        }
+    .qr-wrap {
+      background: #FFFFFF;
+      padding: 9px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* QRCode.js рисует canvas внутри */
+    #qrcode canvas { display: block; }
 
-        .progress-bar-bg {
-            width: 100%;
-            height: 8px;
-            background-color: #2a2a2a;
-            border-radius: 4px;
-            overflow: hidden;
-        }
+    .cb-card-id {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gold);
+    }
+    .cb-hint {
+      font-size: 8.5px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
 
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #c48c6c, #e6ca65);
-            border-radius: 4px;
-            transition: width 0.5s ease-in-out;
-        }
+    /* ── Блок статуса ───────────────────────────────── */
+    .status-block {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .status-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .cashback-pill {
+      background: var(--gold-dim);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 13px;
+      border-radius: 50px;
+    }
 
-        .hint-text {
-            font-size: 12px;
-            color: #666;
-            text-align: center;
-            margin-top: -15px;
-            margin-bottom: 30px;
-        }
+    /* ── Прогресс-бар ───────────────────────────────── */
+    .progress-block {
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 32px;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--text-dim);
+      margin-bottom: 9px;
+    }
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--rose) 0%, var(--gold) 100%);
+      border-radius: 100px;
+      width: 0%;
+      transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .progress-caption {
+      margin-top: 9px;
+      font-size: 10.5px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .progress-caption.gold-level {
+      color: var(--gold);
+      font-weight: 600;
+    }
 
-        .demo-btn {
-            background-color: #242424;
-            color: #ffb74d;
-            border: 1px dashed #ffb74d;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 335px;
-        }
+    /* ── Демо-кнопка ────────────────────────────────── */
+    .demo-btn {
+      width: 100%;
+      max-width: 360px;
+      padding: 12px 20px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-size: 11.5px;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .demo-btn:active   { transform: scale(0.98); background: rgba(255,255,255,0.07); }
+    .demo-btn.ready    { border-color: var(--border); color: var(--gold); }
 
-        .demo-btn:active {
-            transform: scale(0.98);
-            background-color: #2e2e2e;
-        }
+    /* ── Toast-уведомление ──────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(14px);
+      background: rgba(28, 18, 42, 0.95);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 20px;
+      border-radius: 14px;
+      font-size: 12.5px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      backdrop-filter: blur(14px);
+      z-index: 300;
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
 
-        .barcode-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .barcode-lines {
-            width: 200px;
-            height: 60px;
-            background: repeating-linear-gradient(
-                90deg,
-                #000,
-                #000 2px,
-                #fff 2px,
-                #fff 6px,
-                #000 6px,
-                #000 7px,
-                #fff 7px,
-                #fff 9px
-            );
-        }
-
-        .barcode-number {
-            font-family: monospace;
-            font-size: 14px;
-            margin-top: 5px;
-            letter-spacing: 3px;
-        }
-    </style>
+    /* ── Оверлей «Новый уровень!» ───────────────────── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      z-index: 400;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 24px;
+    }
+    .overlay.show { display: flex; }
+    .ov-emoji  { font-size: 52px; }
+    .ov-title  { font-size: 26px; font-weight: 700; color: var(--gold); }
+    .ov-sub    { font-size: 14px; color: var(--text-dim); }
+    .ov-close  {
+      margin-top: 20px;
+      background: var(--gold);
+      color: #0F0B14;
+      border: none;
+      padding: 13px 32px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-    <div class="welcome-text" id="welcome-msg">Привет, Гость!</div>
+  <!-- ══ Шапка ══════════════════════════════════════ -->
+  <div class="header">
+    <div class="logo-text">GLOSS</div>
+    <div class="tagline">BEAUTY SALON · LOYALTY CARD</div>
+  </div>
 
-    <div class="card-container" onclick="toggleCard(this)">
-        <div class="card-inner">
-            <div class="card-front" id="card-visual">
-                <div class="salon-logo">BEAUTY PRO</div>
-                <div class="balance-block">
-                    <div class="balance-label">Доступные бонусы</div>
-                    <div class="balance-value" id="balance-display">0 ₿</div>
-                </div>
-                <div class="card-footer">
-                    <span id="status-display">Загрузка...</span>
-                    <span style="opacity: 0.6; font-size: 11px;">Топни, чтобы перевернуть</span>
-                </div>
-            </div>
-            <div class="card-back">
-                <div class="barcode-box">
-                    <div class="barcode-lines"></div>
-                    <div class="barcode-number" id="user-id-display">ID: 000000</div>
-                </div>
-                <div style="font-size: 11px; color: #555; margin-top: 10px; font-weight: 500;">Покажите администратору на кассе</div>
-            </div>
+  <!-- ══ Карточка ════════════════════════════════════ -->
+  <div class="card-scene" id="cardScene" onclick="flipCard()">
+    <div class="card-inner">
+
+      <!-- Лицевая сторона -->
+      <div class="card-face card-front">
+        <div class="cf-top">
+          <div class="cf-brand">GLOSS</div>
+          <div class="cf-chip"></div>
         </div>
+
+        <div class="cf-middle">
+          <div class="cf-bal-label">Бонусный баланс</div>
+          <div class="cf-bal-value" id="balDisplay">
+            0 <span class="cf-bal-unit">бонусов</span>
+          </div>
+        </div>
+
+        <div class="cf-bottom">
+          <div>
+            <div class="cf-name"   id="nameDisplay">Гость</div>
+            <div class="cf-status" id="statusDisplay">Бронзовый гость 🥉</div>
+          </div>
+          <div class="cf-hint">ТАП → ПЕРЕВЕРНУТЬ</div>
+        </div>
+      </div>
+
+      <!-- Оборотная сторона -->
+      <div class="card-face card-back">
+        <div class="qr-wrap">
+          <div id="qrcode"></div>
+        </div>
+        <div class="cb-card-id" id="cardIdDisplay">GLOSS-000000</div>
+        <div class="cb-hint">ТАП → ВЕРНУТЬСЯ</div>
+      </div>
+
     </div>
+  </div>
 
-    <div class="hint-text">Нажмите на карту, чтобы открыть штрих-код</div>
+  <!-- ══ Статус и кэшбэк ═════════════════════════════ -->
+  <div class="status-block">
+    <div class="status-name"  id="statusTitle">Бронзовый гость 🥉</div>
+    <div class="cashback-pill" id="cashbackPill">Кэшбэк 3%</div>
+  </div>
 
-    <div class="progress-container">
-        <div class="progress-labels">
-            <span id="progress-text">До следующего уровня: 0 руб</span>
-            <span id="progress-percent">0%</span>
-        </div>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progress-fill"></div>
-        </div>
+  <!-- ══ Прогресс-бар ════════════════════════════════ -->
+  <div class="progress-block">
+    <div class="progress-meta">
+      <span id="spentLabel">Потрачено: 0 ₽</span>
+      <span id="nextLabel">До следующего: 10 000 ₽</span>
     </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-caption" id="progressCaption">
+      Ещё 10 000 ₽ до Серебряного уровня
+    </div>
+  </div>
 
-    <button class="demo-btn" onclick="simulateVisit()">
-        ⚡ [ТЕСТ-ДРАЙВ] Симуляция визита на 2 000 ₽
-    </button>
+  <!-- ══ Демо-кнопка ═════════════════════════════════ -->
+  <button class="demo-btn" id="demoBtn" onclick="simulateVisit()">
+    [Демо-тест] Симуляция визита на 2 000 ₽
+  </button>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        if (tg && typeof tg.expand === 'function') {
-            tg.expand();
+  <!-- ══ Toast-уведомление ═══════════════════════════ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ══ Оверлей нового уровня ═══════════════════════ -->
+  <div class="overlay" id="overlay">
+    <div class="ov-emoji" id="ovEmoji">🥈</div>
+    <div class="ov-title" id="ovTitle">Новый уровень!</div>
+    <div class="ov-sub"   id="ovSub">Серебряный гость</div>
+    <button class="ov-close" onclick="closeOverlay()">Отлично! ✨</button>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════════════════ -->
+  <script>
+    // ── Telegram WebApp init ─────────────────────────
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    // ── Парсим параметры из URL ──────────────────────
+    const params   = new URLSearchParams(window.location.search);
+    const userId   = params.get('uid')   || '0';
+    const rawName  = params.get('name')  || (tg?.initDataUnsafe?.user?.first_name) || 'Гость';
+    const userName = decodeURIComponent(rawName);
+
+    // Изменяемое состояние (для демо-симуляции)
+    let state = {
+      balance: parseInt(params.get('balance') || '200', 10),
+      spent:   parseInt(params.get('spent')   || '0',   10),
+    };
+
+    // ── Расчёт уровня (зеркало Python-функции) ───────
+    function getTier(spent) {
+      if (spent < 10000) {
+        return {
+          name: 'Бронзовый гость', emoji: '🥉', cashback: 3,
+          nextAt: 10000, nextName: 'Серебряный',
+          progress: spent / 10000,
+        };
+      } else if (spent < 30000) {
+        return {
+          name: 'Серебряный гость', emoji: '🥈', cashback: 5,
+          nextAt: 30000, nextName: 'Золотой',
+          progress: (spent - 10000) / 20000,
+        };
+      } else {
+        return {
+          name: 'Золотой гость', emoji: '🥇', cashback: 7,
+          nextAt: null, nextName: null, progress: 1,
+        };
+      }
+    }
+
+    // ── Форматирование числа с пробелами ─────────────
+    function fmt(n) {
+      return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f');
+    }
+
+    // ── Переворот карточки ───────────────────────────
+    function flipCard() {
+      document.getElementById('cardScene').classList.toggle('flipped');
+    }
+
+    // ── Обновление всего интерфейса ──────────────────
+    function renderUI(animate = false) {
+      const tier = getTier(state.spent);
+      const pct  = Math.min(Math.round(tier.progress * 100), 100);
+
+      // Карточка — лицо
+      document.getElementById('balDisplay').innerHTML =
+        `${fmt(state.balance)} <span class="cf-bal-unit">бонусов</span>`;
+      document.getElementById('nameDisplay').textContent   = userName;
+      document.getElementById('statusDisplay').textContent = `${tier.name} ${tier.emoji}`;
+
+      // Карточка — оборот
+      document.getElementById('cardIdDisplay').textContent =
+        'GLOSS-' + String(userId).padStart(6, '0');
+
+      // Статус и кэшбэк
+      document.getElementById('statusTitle').textContent  = `${tier.name} ${tier.emoji}`;
+      document.getElementById('cashbackPill').textContent = `Кэшбэк ${tier.cashback}%`;
+
+      // Прогресс-бар
+      const fill    = document.getElementById('progressFill');
+      const caption = document.getElementById('progressCaption');
+      const spentLbl = document.getElementById('spentLabel');
+      const nextLbl  = document.getElementById('nextLabel');
+
+      spentLbl.textContent = `Потрачено: ${fmt(state.spent)} ₽`;
+
+      if (tier.nextAt !== null) {
+        const remaining = tier.nextAt - state.spent;
+        nextLbl.textContent  = `До ${tier.nextName}: ${fmt(tier.nextAt)} ₽`;
+        caption.textContent  = `Ещё ${fmt(Math.max(0, remaining))} ₽ до ${tier.nextName} уровня`;
+        caption.className    = 'progress-caption';
+        // Анимация ширины (с задержкой при первой отрисовке)
+        setTimeout(() => { fill.style.width = pct + '%'; }, animate ? 50 : 0);
+      } else {
+        nextLbl.textContent  = 'Максимальный уровень';
+        caption.textContent  = '🏆 Вы достигли высшего статуса!';
+        caption.className    = 'progress-caption gold-level';
+        fill.style.width     = '100%';
+        document.getElementById('demoBtn').style.display = 'none';
+      }
+    }
+
+    // ── Toast ─────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, ms = 3200) {
+      clearTimeout(toastTimer);
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('visible');
+      toastTimer = setTimeout(() => el.classList.remove('visible'), ms);
+    }
+
+    // ── Оверлей нового уровня ─────────────────────────
+    let prevTierName = getTier(state.spent).name;
+
+    function maybeShowLevelUp(tier) {
+      if (tier.name !== prevTierName) {
+        document.getElementById('ovEmoji').textContent = tier.emoji;
+        document.getElementById('ovTitle').textContent = `Новый уровень!`;
+        document.getElementById('ovSub').textContent   = tier.name;
+        document.getElementById('overlay').classList.add('show');
+        prevTierName = tier.name;
+      }
+    }
+    function closeOverlay() {
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+    // ── Демо-симуляция визита ─────────────────────────
+    let demoCount = 0;
+
+    function simulateVisit() {
+      demoCount++;
+      const visitAmt = 2000;
+      const tier     = getTier(state.spent);           // уровень ДО
+      const cashback = Math.round(visitAmt * tier.cashback / 100);
+
+      state.spent   += visitAmt;
+      state.balance += cashback;
+
+      const newTier = getTier(state.spent);            // уровень ПОСЛЕ
+      renderUI(true);
+      maybeShowLevelUp(newTier);
+      showToast(
+        `✅ +${fmt(cashback)} бонусов (кэшбэк ${newTier.cashback}%) · визит ${demoCount}`
+      );
+
+      // После 3-го демо-визита показываем кнопку «Отправить в бот»
+      if (demoCount >= 3) {
+        const btn = document.getElementById('demoBtn');
+        btn.textContent = '📲 Отправить результат в бот';
+        btn.onclick     = sendToBot;
+        btn.classList.add('ready');
+      }
+    }
+
+    // ── Отправка итогов в бот (закрывает Mini App) ────
+    function sendToBot() {
+      if (!tg) {
+        showToast('⚠️ Откройте в Telegram для отправки');
+        return;
+      }
+      tg.sendData(JSON.stringify({
+        action:      'demo_visit',
+        visits:      demoCount,
+        amount:      demoCount * 2000,
+        new_balance: state.balance,
+        new_spent:   state.spent,
+      }));
+    }
+
+    // ── Генерация QR-кода ─────────────────────────────
+    function buildQR() {
+      const qrData = `GLOSS:${String(userId).padStart(6, '0')}`;
+
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(document.getElementById('qrcode'), {
+          text:         qrData,
+          width:        108,
+          height:       108,
+          colorDark:    '#150B27',
+          colorLight:   '#FFFFFF',
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+      } else {
+        // SVG-штрих-код как запасной вариант
+        const el = document.getElementById('qrcode');
+        el.innerHTML = buildBarcodeSVG(parseInt(userId) || 42);
+      }
+    }
+
+    function buildBarcodeSVG(seed) {
+      const widths  = [3, 1, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3];
+      const heights = [50, 60, 48, 55, 62, 46, 58, 50, 55, 48];
+      let bars = '';
+      let x = 4;
+      for (let i = 0; i < 28; i++) {
+        const w = widths[(seed * 3 + i) % widths.length];
+        const h = heights[(seed + i * 2) % heights.length];
+        if (i % 2 === 0) {
+          bars += `<rect x="${x}" y="${68 - h}" width="${w}" height="${h}"
+                         fill="#150B27" rx="0.5"/>`;
         }
+        x += w + 1.5;
+      }
+      return `<svg width="108" height="68" viewBox="0 0 108 68"
+               xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
+    }
 
-        const username = (tg && tg.initDataUnsafe?.user?.first_name) || "Гость";
-        document.getElementById('welcome-msg').innerText = `Рады видеть вас, ${username}!`;
+    // ── Запуск ────────────────────────────────────────
+    renderUI(false);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let balance = parseInt(urlParams.get('balance')) || 200;
-        let totalSpent = parseInt(urlParams.get('spent')) || 0;
-        let userId = urlParams.get('user_id') || "743921";
+    // Анимируем прогресс-бар через 350 мс после загрузки
+    setTimeout(() => {
+      const tier = getTier(state.spent);
+      const pct  = Math.min(Math.round(tier.progress * 100), 100);
+      if (tier.nextAt !== null) {
+        document.getElementById('progressFill').style.width = pct + '%';
+      }
+    }, 350);
 
-        document.getElementById('user-id-display').innerText = `ID: ${userId}`;
+    // Загружаем QRCode.js и рисуем QR-код
+    const s = document.createElement('script');
+    s.src     = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload  = buildQR;
+    s.onerror = buildQR;   // при ошибке сети — рисуем SVG-штрих-код
+    document.head.appendChild(s);
+  </script>
 
-        function updateUI() {
-            let statusName = "Бронзовый гость 🥉";
-            let cashback = 3;
-            let nextLevelTarget = 10000;
-            let currentLevelBase = 0;
-            let cardBackground = 'var(--card-bronze)';
-
-            if (totalSpent >= 10000 && totalSpent < 30000) {
-                statusName = "Серебряный гость 🥈";
-                cashback = 5;
-                nextLevelTarget = 30000;
-                currentLevelBase = 10000;
-                cardBackground = 'var(--card-silver)';
-            } else if (totalSpent >= 30000) {
-                statusName = "Золотой гость 🥇";
-                cashback = 7;
-                nextLevelTarget = totalSpent;
-                currentLevelBase = 0;
-                cardBackground = 'var(--card-gold)';
-            }
-
-            document.getElementById('balance-display').innerText = `${balance} ₿`;
-            document.getElementById('status-display').innerText = `${statusName} (${cashback}%)`;
-            document.getElementById('card-visual').style.background = cardBackground;
-
-            if (totalSpent >= 30000) {
-                document.getElementById('progress-text').innerText = `У вас максимальный статус!`;
-                document.getElementById('progress-percent').innerText = `100%`;
-                document.getElementById('progress-fill').style.width = `100%`;
-            } else {
-                let needed = nextLevelTarget - totalSpent;
-                let range = nextLevelTarget - currentLevelBase;
-                let currentProgressInRange = totalSpent - currentLevelBase;
-                let percent = Math.floor((currentProgressInRange / range) * 100);
-                
-                document.getElementById('progress-text').innerText = `До следующего уровня: ${needed} ₽`;
-                document.getElementById('progress-percent').innerText = `${percent}%`;
-                document.getElementById('progress-fill').style.width = `${percent}%`;
-            }
-        }
-
-        function toggleCard(container) {
-            container.classList.toggle('flipped');
-        }
-
-        function simulateVisit() {
-            let cashbackPercent = 3;
-            if (totalSpent >= 10000 && totalSpent < 30000) cashbackPercent = 5;
+</body>
+</html>
