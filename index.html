@@ -77,12 +77,11 @@
         }
 
         .card-back {
-            background: #1e1e1e;
-            color: white;
+            background: #ffffff;
+            color: #000000;
             transform: rotateY(180deg);
             justify-content: center;
             align-items: center;
-            border: 1px solid #333;
         }
 
         .salon-logo {
@@ -172,20 +171,36 @@
             background-color: #2e2e2e;
         }
 
-        .qr-placeholder {
-            width: 120px;
-            height: 120px;
-            background: white;
-            padding: 5px;
-            border-radius: 8px;
+        .barcode-box {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
         }
-        
-        .qr-placeholder img {
-            width: 100%;
-            height: 100%;
+
+        .barcode-lines {
+            width: 200px;
+            height: 60px;
+            background: repeating-linear-gradient(
+                90deg,
+                #000,
+                #000 2px,
+                #fff 2px,
+                #fff 6px,
+                #000 6px,
+                #000 7px,
+                #fff 7px,
+                #fff 9px
+            );
+        }
+
+        .barcode-number {
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 5px;
+            letter-spacing: 3px;
         }
     </style>
 </head>
@@ -207,15 +222,16 @@
                 </div>
             </div>
             <div class="card-back">
-                <div class="qr-placeholder">
-                    <img id="qr-img" src="https://qrserver.com" alt="QR">
+                <div class="barcode-box">
+                    <div class="barcode-lines"></div>
+                    <div class="barcode-number" id="user-id-display">ID: 000000</div>
                 </div>
-                <div style="font-size: 11px; color: #aaa; margin-top: 10px;">Покажите администратору на кассе</div>
+                <div style="font-size: 11px; color: #555; margin-top: 10px; font-weight: 500;">Покажите администратору на кассе</div>
             </div>
         </div>
     </div>
 
-    <div class="hint-text">Нажмите на карту, чтобы открыть QR-код</div>
+    <div class="hint-text">Нажмите на карту, чтобы открыть штрих-код</div>
 
     <div class="progress-container">
         <div class="progress-labels">
@@ -233,17 +249,19 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        if (tg && typeof tg.expand === 'function') {
+            tg.expand();
+        }
 
-        const username = tg.initDataUnsafe?.user?.first_name || "Гость";
+        const username = (tg && tg.initDataUnsafe?.user?.first_name) || "Гость";
         document.getElementById('welcome-msg').innerText = `Рады видеть вас, ${username}!`;
 
         const urlParams = new URLSearchParams(window.location.search);
         let balance = parseInt(urlParams.get('balance')) || 200;
         let totalSpent = parseInt(urlParams.get('spent')) || 0;
-        let userId = urlParams.get('user_id') || "000000";
+        let userId = urlParams.get('user_id') || "743921";
 
-        document.getElementById('qr-img').src = `https://qrserver.com{userId}`;
+        document.getElementById('user-id-display').innerText = `ID: ${userId}`;
 
         function updateUI() {
             let statusName = "Бронзовый гость 🥉";
@@ -293,18 +311,3 @@
         function simulateVisit() {
             let cashbackPercent = 3;
             if (totalSpent >= 10000 && totalSpent < 30000) cashbackPercent = 5;
-            if (totalSpent >= 30000) cashbackPercent = 7;
-
-            let earnedBonuses = Math.floor(2000 * (cashbackPercent / 100));
-            
-            totalSpent += 2000;
-            balance += earnedBonuses;
-
-            updateUI();
-
-            tg.showAlert(`Успешный тест визита!\n\nСумма: 2 000 ₽\nНачислено бонусов: +${earnedBonuses} ₿ (Кэшбэк ${cashbackPercent}%)`);
-        }
-
-        updateUI();
-    </script>
-</body>
