@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта Лояльности</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bronze: linear-gradient(135deg, #a86038 0%, #c48c6c 100%);
+            --card-silver: linear-gradient(135deg, #707880 0%, #b8bfc6 100%);
+            --card-gold: linear-gradient(135deg, #a37a1a 0%, #e6ca65 100%);
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #e0e0e0;
+        }
+
+        .card-container {
+            perspective: 1000px;
+            width: 335px;
+            height: 200px;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        .card-front {
+            background: var(--card-bronze);
+            justify-content: space-between;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .card-back {
+            background: #1e1e1e;
+            color: white;
+            transform: rotateY(180deg);
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #333;
+        }
+
+        .salon-logo {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .balance-block {
+            margin-top: auto;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+        }
+
+        .balance-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .card-footer {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .progress-container {
+            width: 335px;
+            margin-bottom: 40px;
+        }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: #2a2a2a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #c48c6c, #e6ca65);
+            border-radius: 4px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .hint-text {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: -15px;
+            margin-bottom: 30px;
+        }
+
+        .demo-btn {
+            background-color: #242424;
+            color: #ffb74d;
+            border: 1px dashed #ffb74d;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 335px;
+        }
+
+        .demo-btn:active {
+            transform: scale(0.98);
+            background-color: #2e2e2e;
+        }
+
+        .qr-placeholder {
+            width: 120px;
+            height: 120px;
+            background: white;
+            padding: 5px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .qr-placeholder img {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-text" id="welcome-msg">Привет, Гость!</div>
+
+    <div class="card-container" onclick="toggleCard(this)">
+        <div class="card-inner">
+            <div class="card-front" id="card-visual">
+                <div class="salon-logo">BEAUTY PRO</div>
+                <div class="balance-block">
+                    <div class="balance-label">Доступные бонусы</div>
+                    <div class="balance-value" id="balance-display">0 ₿</div>
+                </div>
+                <div class="card-footer">
+                    <span id="status-display">Загрузка...</span>
+                    <span style="opacity: 0.6; font-size: 11px;">Топни, чтобы перевернуть</span>
+                </div>
+            </div>
+            <div class="card-back">
+                <div class="qr-placeholder">
+                    <img id="qr-img" src="https://qrserver.com" alt="QR">
+                </div>
+                <div style="font-size: 11px; color: #aaa; margin-top: 10px;">Покажите администратору на кассе</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="hint-text">Нажмите на карту, чтобы открыть QR-код</div>
+
+    <div class="progress-container">
+        <div class="progress-labels">
+            <span id="progress-text">До следующего уровня: 0 руб</span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <button class="demo-btn" onclick="simulateVisit()">
+        ⚡ [ТЕСТ-ДРАЙВ] Симуляция визита на 2 000 ₽
+    </button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const username = tg.initDataUnsafe?.user?.first_name || "Гость";
+        document.getElementById('welcome-msg').innerText = `Рады видеть вас, ${username}!`;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let balance = parseInt(urlParams.get('balance')) || 200;
+        let totalSpent = parseInt(urlParams.get('spent')) || 0;
+        let userId = urlParams.get('user_id') || "000000";
+
+        document.getElementById('qr-img').src = `https://qrserver.com{userId}`;
+
+        function updateUI() {
+            let statusName = "Бронзовый гость 🥉";
+            let cashback = 3;
+            let nextLevelTarget = 10000;
+            let currentLevelBase = 0;
+            let cardBackground = 'var(--card-bronze)';
+
+            if (totalSpent >= 10000 && totalSpent < 30000) {
+                statusName = "Серебряный гость 🥈";
+                cashback = 5;
+                nextLevelTarget = 30000;
+                currentLevelBase = 10000;
+                cardBackground = 'var(--card-silver)';
+            } else if (totalSpent >= 30000) {
+                statusName = "Золотой гость 🥇";
+                cashback = 7;
+                nextLevelTarget = totalSpent;
+                currentLevelBase = 0;
+                cardBackground = 'var(--card-gold)';
+            }
+
+            document.getElementById('balance-display').innerText = `${balance} ₿`;
+            document.getElementById('status-display').innerText = `${statusName} (${cashback}%)`;
+            document.getElementById('card-visual').style.background = cardBackground;
+
+            if (totalSpent >= 30000) {
+                document.getElementById('progress-text').innerText = `У вас максимальный статус!`;
+                document.getElementById('progress-percent').innerText = `100%`;
+                document.getElementById('progress-fill').style.width = `100%`;
+            } else {
+                let needed = nextLevelTarget - totalSpent;
+                let range = nextLevelTarget - currentLevelBase;
+                let currentProgressInRange = totalSpent - currentLevelBase;
+                let percent = Math.floor((currentProgressInRange / range) * 100);
+                
+                document.getElementById('progress-text').innerText = `До следующего уровня: ${needed} ₽`;
+                document.getElementById('progress-percent').innerText = `${percent}%`;
+                document.getElementById('progress-fill').style.width = `${percent}%`;
+            }
+        }
+
+        function toggleCard(container) {
+            container.classList.toggle('flipped');
+        }
+
+        function simulateVisit() {
+            let cashbackPercent = 3;
+            if (totalSpent >= 10000 && totalSpent < 30000) cashbackPercent = 5;
+            if (totalSpent >= 30000) cashbackPercent = 7;
+
+            let earnedBonuses = Math.floor(2000 * (cashbackPercent / 100));
+            
+            totalSpent += 2000;
+            balance += earnedBonuses;
+
+            updateUI();
+
+            tg.showAlert(`Успешный тест визита!\n\nСумма: 2 000 ₽\nНачислено бонусов: +${earnedBonuses} ₿ (Кэшбэк ${cashbackPercent}%)`);
+        }
+
+        updateUI();
+    </script>
+</body>
