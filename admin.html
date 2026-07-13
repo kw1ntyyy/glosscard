@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель Директора — GLOSS</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        :root {
+            --bg-color: #0b0b0c;
+            --card-bg: #141416;
+            --accent-gold: #cca43b;
+            --text-main: #ffffff;
+            --text-muted: #8e8e93;
+            --neon-green: #30d158;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 4px 0;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(204, 164, 59, 0.1);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: left;
+        }
+
+        .stat-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat-value.green {
+            color: var(--neon-green);
+        }
+
+        .chart-section {
+            background: var(--card-bg);
+            border: 1px solid rgba(204, 164, 59, 0.15);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .bar-chart {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            height: 120px;
+            padding-top: 10px;
+        }
+
+        .bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 14%;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(180deg, var(--accent-gold), #6b531a);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s ease;
+            box-shadow: 0 0 10px rgba(204, 164, 59, 0.2);
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .master-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .master-row:last-child {
+            border-bottom: none;
+        }
+
+        .master-name {
+            font-size: 13px;
+        }
+
+        .master-load {
+            font-size: 12px;
+            color: var(--neon-green);
+            background: rgba(48, 209, 88, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .footer-btn {
+            background: none;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>GLOSS SALON</h1>
+        <p>Панель аналитики директора</p>
+    </div>
+
+    <!-- Блок общих счетчиков -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-title">Выручка (мес)</div>
+            <div class="stat-value green">428,500 ₽</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Выдано карт</div>
+            <div class="stat-value">184 шт</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Записи на сегодня</div>
+            <div class="stat-value">14 сеансов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Средний чек</div>
+            <div class="stat-value">3,200 ₽</div>
+        </div>
+    </div>
+
+    <!-- График загрузки салона по дням -->
+    <div class="chart-section">
+        <div class="chart-title">📊 Динамика выручки за неделю</div>
+        <div class="bar-chart">
+            <div class="bar-container"><div class="bar" style="height: 40%;"></div><div class="bar-label">Пн</div></div>
+            <div class="bar-container"><div class="bar" style="height: 55%;"></div><div class="bar-label">Вт</div></div>
+            <div class="bar-container"><div class="bar" style="height: 70%;"></div><div class="bar-label">Ср</div></div>
+            <div class="bar-container"><div class="bar" style="height: 60%;"></div><div class="bar-label">Чт</div></div>
+            <div class="bar-container"><div class="bar" style="height: 95%;"></div><div class="bar-label">Пт</div></div>
+            <div class="bar-container"><div class="bar" style="height: 100%;"></div><div class="bar-label">Сб</div></div>
+            <div class="bar-container"><div class="bar" style="height: 20%;"></div><div class="bar-label">Вс</div></div>
+        </div>
+    </div>
+
+    <!-- Топ мастеров -->
+    <div class="chart-section">
+        <div class="chart-title">👑 Загрузка мастеров</div>
+        <div class="master-row">
+            <div class="master-name">Анна (Маникюр)</div>
+            <div class="master-load">92% забито</div>
+        </div>
+        <div class="master-row">
+            <div class="master-name">Мария (Стрижки)</div>
+            <div class="master-load">85% забито</div>
+        </div>
+        <div class="master-row">
+            <div class="master-name">Дарья (Уход)</div>
+            <div class="master-load">64% забито</div>
+        </div>
+    </div>
+
+    <button class="footer-btn" onclick="window.Telegram.WebApp.close()">Закрыть панель</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+    </script>
+</body>
+</html>
